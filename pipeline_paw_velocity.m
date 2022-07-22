@@ -32,7 +32,7 @@ parameters.mice_all = mice_all;
 % Ex cont: stackList=ListStacks(numberVector,digitNumber); 
 % Ex cont: mice_all(1).stacks(1)=stackList;
 
-parameters.mice_all = parameters.mice_all(7);    
+parameters.mice_all = parameters.mice_all;    
 
 % Give the number of digits that should be included in each stack number.
 parameters.digitNumber=2; 
@@ -175,7 +175,7 @@ parameters.smoothing_factor = 5;
 
 % Input 
 parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\extracted tracking\'], 'mouse', '\', 'day', '\'};
-parameters.loop_list.things_to_load.data.filename= {'trialbody0', 'stack', '*.mat'}; % Has a variable middle part to the name
+parameters.loop_list.things_to_load.data.filename= {'trialbody', 'stack', '*.mat'}; % Has a variable middle part to the name
 parameters.loop_list.things_to_load.data.variable= {'trial.data'}; 
 parameters.loop_list.things_to_load.data.level = 'stack';
 
@@ -268,11 +268,14 @@ end
 if isfield(parameters, 'loop_list')
 parameters = rmfield(parameters,'loop_list');
 end
-
+parameters.loop_list.body_parts = {'FR', 'FL', 'HL'};
+parameters.loop_list.vel_type = {'x', 'y', 'total'};
 % Iterators
 parameters.loop_list.iterators = {'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
                'day', {'loop_variables.mice_all(', 'mouse_iterator', ').days(:).name'}, 'day_iterator';
-                   'stack', {'loop_variables.mice_all(',  'mouse_iterator', ').days(', 'day_iterator', ').stacks'}, 'stack_iterator'};
+                   'stack', {'loop_variables.mice_all(',  'mouse_iterator', ').days(', 'day_iterator', ').stacks'}, 'stack_iterator';
+                   'body_part', 
+                   'vel_type'};
 parameters.loop_variables.periods_nametable = periods_motorized; 
 
 % Skip any files that don't exist (spontaneous or problem files)
