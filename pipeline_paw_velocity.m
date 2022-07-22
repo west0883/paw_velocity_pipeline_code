@@ -32,7 +32,7 @@ parameters.mice_all = mice_all;
 % Ex cont: stackList=ListStacks(numberVector,digitNumber); 
 % Ex cont: mice_all(1).stacks(1)=stackList;
 
-parameters.mice_all = parameters.mice_all;    
+parameters.mice_all = parameters.mice_all(7);    
 
 % Give the number of digits that should be included in each stack number.
 parameters.digitNumber=2; 
@@ -136,11 +136,11 @@ parameters.loop_list.iterators = {
 
 % Input values
 parameters.loop_list.things_to_check.dir = {[parameters.dir_exper 'behavior\body\extracted tracking\'], 'mouse', '\', 'day', '\'};
-parameters.loop_list.things_to_check.filename= {'trial', 'stack', '*.mat'};  
+parameters.loop_list.things_to_check.filename= {'trialbody0', 'stack', '*.mat'};  
 
 % Output
 parameters.loop_list.missing_data.dir = {[parameters.dir_exper 'behavior\body\']};
-parameters.loop_list.missing_data.filename= {'missing_data.mat'};
+parameters.loop_list.missing_data.filename= {'missing_data_m1099.mat'};
 
 SearchForData(parameters);
 
@@ -162,7 +162,30 @@ parameters.loop_list.iterators = {
                'stack', {'getfield(loop_variables, {1}, "mice_all_no_missing_data", {',  'mouse_iterator', '}, "days", {', 'day_iterator', '}, ', 'loop_variables.conditions_stack_locations{', 'condition_iterator', '})'}, 'stack_iterator'; 
                };
 
+% Columns for each body part (x position, y position, likelihood).
+parameters.columns_to_use.FR = 8:10;
+parameters.columns_to_use.FL = 11:13;
+parameters.columns_to_use.HL = 14:16;
 
+% Likelihood minimum threshold.
+parameters.likelihood_threshold = 0.3;
+
+% Number of time points to use in a moving mean (applied to position data).
+parameters.smoothing_factor = 5; 
+
+% Input 
+parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\extracted tracking\'], 'mouse', '\', 'day', '\'};
+parameters.loop_list.things_to_load.data.filename= {'trialbody0', 'stack', '*.mat'}; % Has a variable middle part to the name
+parameters.loop_list.things_to_load.data.variable= {'trial.data'}; 
+parameters.loop_list.things_to_load.data.level = 'stack';
+
+% Output
+parameters.loop_list.things_to_save.velocity.dir = {[parameters.dir_exper 'behavior\body\paw velocity\'], 'mouse', '\', 'day', '\'};
+parameters.loop_list.things_to_save.velocity.filename= {'velocity', 'stack', '.mat'};
+parameters.loop_list.things_to_save.velocity.variable= {'velocity'}; 
+parameters.loop_list.things_to_save.velocity.level = 'stack';
+
+RunAnalysis({@CalculatePawVelocity}, parameters);
 
 %% Pad short stacks with NaNs.
 % Sometimes the behavior cameras were 50-100 frames short, but we still
@@ -202,6 +225,10 @@ for itemi = 1:size(looping_output_list,1)
     filestring = CreateStrings(parameters.filename_forcheck, parameters.keywords, parameters.values);
 
     % Usin matfile objects, check size of the file
+   if ~isfile(filestring)
+       continue
+   end
+
     mat_object = matfile(filestring);
 
     % If less than frames
@@ -209,14 +236,22 @@ for itemi = 1:size(looping_output_list,1)
 
         % Load.
         load(filestring, 'velocity');
-
+   
         % Pad 
-        short_number = parameters.frames - size(velocity,1);
-        velocity = [velocity; NaN(short_number, 1)]; 
+        short_number = parameters.frames - size(velocity.FL.total, 1);
 
+        body_parts = {'FR', 'FL', 'HL'};
+        % for each body part
+        for parti = 1:numel(body_parts)
+            body_part = body_parts{parti};
+            velocity.(body_part).total = [velocity.(body_part).total; NaN(short_number, 1)]; 
+            velocity.(body_part).x = [velocity.(body_part).x; NaN(short_number, 1)]; 
+            velocity.(body_part).y = [velocity.(body_part).y; NaN(short_number, 1)]; 
+        end
         % Tell user.
-        disp(['Stack short by ' num2str(short_number) ' frames.']);
-
+        if short_number ~= 0
+            disp(['Stack short by ' num2str(short_number) ' frames.']);
+        end
         % Save
         save(filestring, 'velocity');
     end
