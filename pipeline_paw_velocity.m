@@ -31,8 +31,7 @@ parameters.mice_all = mice_all;
 % Ex: numberVector=2:12; digitNumber=2;
 % Ex cont: stackList=ListStacks(numberVector,digitNumber); 
 % Ex cont: mice_all(1).stacks(1)=stackList;
-
-parameters.mice_all = parameters.mice_all;    
+parameters.mice_all = parameters.mice_all;   
 
 % Give the number of digits that should be included in each stack number.
 parameters.digitNumber=2; 
@@ -150,6 +149,8 @@ parameters.position_smoothing_factor = 5;
 
 % Number of time points to use in a moving mean (applied to calculated velocities).
 parameters.velocity_smoothing_factor = 5; 
+
+parameters.maximumOutlierCount = 250;
 
 % Input 
 parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\extracted tracking\'], 'mouse', '\', 'day', '\'};
