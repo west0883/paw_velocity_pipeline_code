@@ -28,7 +28,7 @@ parameters.loop_list.iterators = {
 looping_output_list = LoopGenerator(parameters.loop_list, parameters.loop_variables); 
 
 % Make a new mice_all
-mice_all_no_missing_data = mice_all;
+mice_all_no_missing_data = parameters.mice_all; %mice_all;
 
 % For each item in looping output list,
 for itemi = 1:size(looping_output_list,1)
