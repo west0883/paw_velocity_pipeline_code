@@ -203,6 +203,7 @@ for itemi = 1:size(looping_output_list,1)
         parameters.values{i} = looping_output_list(itemi).(cell2mat(parameters.keywords(i)));
     end
 
+    parameters.RunAnalysis_flag = true;
     MessageToUser('Checking ', parameters);
 
     % Get the filename 
