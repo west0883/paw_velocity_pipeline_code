@@ -123,7 +123,32 @@ parameters.loop_list.things_to_save.import_out.level = 'stack_name';
 
 RunAnalysis({@ImportDLCPupilData}, parameters)
 
-%% Search for data that wasn't imported
+%% Search for data that wasn't imported -- all but m1099
+
+% Iterators
+parameters.loop_list.iterators = {
+               'mouse', {'loop_variables.mice_all(1:6).name'}, 'mouse_iterator'; 
+               'day', {'loop_variables.mice_all(', 'mouse_iterator', ').days(:).name'}, 'day_iterator';
+               'condition', {'loop_variables.conditions'}, 'condition_iterator';
+               'stack', {'getfield(loop_variables, {1}, "mice_all", {',  'mouse_iterator', '}, "days", {', 'day_iterator', '}, ', 'loop_variables.conditions_stack_locations{', 'condition_iterator', '})'}, 'stack_iterator'; 
+               };
+
+
+% Input values
+parameters.loop_list.things_to_check.dir = {[parameters.dir_exper 'behavior\body\extracted tracking\'], 'mouse', '\', 'day', '\'};
+parameters.loop_list.things_to_check.filename= {'trialbody', 'stack', '*.mat'}; 
+
+% Output
+parameters.loop_list.missing_data.dir = {[parameters.dir_exper 'behavior\body\']};
+parameters.loop_list.missing_data.filename = {'missing_data.mat'};
+
+SearchForData(parameters);
+
+
+%% Search for data that wasn't imported -- m1099 only
+
+parameters.mice_all = mice_all(7);
+parameters.loop_variables.mice_all = parameters.mice_all;
 
 % Iterators
 parameters.loop_list.iterators = {
@@ -136,13 +161,16 @@ parameters.loop_list.iterators = {
 
 % Input values
 parameters.loop_list.things_to_check.dir = {[parameters.dir_exper 'behavior\body\extracted tracking\'], 'mouse', '\', 'day', '\'};
-parameters.loop_list.things_to_check.filename= {'trialbody0', 'stack', '*.mat'};  
+parameters.loop_list.things_to_check.filename= {'trialbody0', 'stack', '*.mat'};  % 'trialbody0'
 
 % Output
 parameters.loop_list.missing_data.dir = {[parameters.dir_exper 'behavior\body\']};
-parameters.loop_list.missing_data.filename= {'missing_data_m1099.mat'};
+parameters.loop_list.missing_data.filename = {'missing_data_m1099.mat'}; % {'missing_data_m1099.mat'};
 
 SearchForData(parameters);
+
+parameters.mice_all = mice_all;
+parameters.loop_variables.mice_all = parameters.mice_all;
 
 %% Make a mice_all that doesn't have the missing body data in it.
 % create_mice_all_no_missing_bodydata.m
