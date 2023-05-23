@@ -3,8 +3,16 @@
 % 7/22/22
 
 
-% Load list of missing data
+% Load list of missing data (all other mice)
 load('Y:\Sarah\Analysis\Experiments\Random Motorized Treadmill\behavior\body\missing_data.mat');
+list_1 = missing_data;
+
+% Load list of missing data (mouse 1099)
+load('Y:\Sarah\Analysis\Experiments\Random Motorized Treadmill\behavior\body\missing_data.mat');
+list_2 = missing_data;
+
+% concatenate the 2 lists 
+missing_data = [list_1; list_2];
 
 % Load mice_all
 load('Y:\Sarah\Analysis\Experiments\Random Motorized Treadmill\mice_all.mat');
