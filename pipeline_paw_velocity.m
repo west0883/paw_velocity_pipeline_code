@@ -198,6 +198,9 @@ parameters.removeOutliers = true;
 parameters.columns_to_use.FR = 8:10;
 parameters.columns_to_use.FL = 11:13;
 parameters.columns_to_use.HL = 14:16;
+parameters.columns_to_use.tail = 17:19;
+parameters.columns_to_use.nose = 2:4;
+parameters.columns_to_use.eye = 5:7;
 
 % Likelihood minimum threshold.
 parameters.likelihood_threshold = 0.3;
@@ -280,7 +283,7 @@ for itemi = 1:size(looping_output_list,1)
         % Pad 
         short_number = parameters.frames - size(velocity.FL.total, 1);
 
-        body_parts = {'FR', 'FL', 'HL'};
+        body_parts = {'FR', 'FL', 'HL', 'tail', 'nose', 'eye'};
         % for each body part
         for parti = 1:numel(body_parts)
             body_part = body_parts{parti};
@@ -301,21 +304,30 @@ end
 % This is so the instances stay properly aligned with fluorescence data
 % Checks in \body\paw velocity\, puts into \body\paw velocity
 
-% missing_body_data.m
+% change to do with all body parts, with positions
+missing_body_data.m
 
-%% Motirized: Segment by behavior
+%% Convert to an easier structure format
+parameters.loop_list.iterators = {'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
+               'day', {'loop_variables.mice_all(', 'mouse_iterator', ').days(:).name'}, 'day_iterator';
+                   'stack', {'loop_variables.mice_all(',  'mouse_iterator', ').days(', 'day_iterator', ').stacks'}, 'stack_iterator'};
+                  
+% only keep totals, resave
+
+
+%% Motorized: Segment by behavior
 % Always clear loop list first. 
 if isfield(parameters, 'loop_list')
 parameters = rmfield(parameters,'loop_list');
 end
 parameters.loop_list.body_parts = {'FR', 'FL', 'HL'};
-parameters.loop_list.vel_type = {'x', 'y', 'total'};
+
 % Iterators
 parameters.loop_list.iterators = {'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
                'day', {'loop_variables.mice_all(', 'mouse_iterator', ').days(:).name'}, 'day_iterator';
                    'stack', {'loop_variables.mice_all(',  'mouse_iterator', ').days(', 'day_iterator', ').stacks'}, 'stack_iterator';
-                   'body_part', 
-                   'vel_type'};
+                   'body_part', {'loop_list.body_parts'}, 'body_part_iterator'};
+ 
 parameters.loop_variables.periods_nametable = periods_motorized; 
 
 % Skip any files that don't exist (spontaneous or problem files)
