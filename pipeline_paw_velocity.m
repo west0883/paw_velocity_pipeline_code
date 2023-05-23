@@ -214,31 +214,51 @@ for itemi = 1:size(looping_output_list,1)
        continue
    end
 
-    mat_object = matfile(filestring);
+    % mat_object = matfile(filestring);
 
     % If less than frames
-    if size(mat_object.velocity, 1) < parameters.frames
+    % if size(mat_object.velocity.FR.x, 1) < parameters.frames
 
+    types = {'velocity', 'position'};
+
+    for typei = 1:numel(types)
+        type = types{typei};
+        
+        % Get new filestring 
+        filename_new =  {[parameters.dir_exper 'behavior\body\paw ' type '\'], 'mouse', '\', 'day', ['\' type], 'stack', '.mat'};
+       
+        % Get the filename 
+        filestring = CreateStrings(filename_new, parameters.keywords, parameters.values);
+        
         % Load.
-        load(filestring, 'velocity');
-   
-        % Pad 
-        short_number = parameters.frames - size(velocity.FL.total, 1);
+        holder = load(filestring, type);
+        holder = holder.(type);
+        
+        if size(holder.FL.total_magnitude, 1) < parameters.frames
 
-        body_parts = {'FR', 'FL', 'HL', 'tail', 'nose', 'eye'};
-        % for each body part
-        for parti = 1:numel(body_parts)
-            body_part = body_parts{parti};
-            velocity.(body_part).total = [velocity.(body_part).total; NaN(short_number, 1)]; 
-            velocity.(body_part).x = [velocity.(body_part).x; NaN(short_number, 1)]; 
-            velocity.(body_part).y = [velocity.(body_part).y; NaN(short_number, 1)]; 
+            % Pad 
+            short_number = parameters.frames - size(holder.FL.total_magnitude, 1);
+    
+            body_parts = parameters.loop_variables.body_parts;
+            % for each body part
+            for parti = 1:numel(body_parts)
+                body_part = body_parts{parti};
+                holder.(body_part).total_magnitude = [holder.(body_part).total_magnitude; NaN(short_number, 1)];
+                holder.(body_part).total_angle = [holder.(body_part).total_angle; NaN(short_number, 1)]; 
+                holder.(body_part).x = [holder.(body_part).x; NaN(short_number, 1)]; 
+                holder.(body_part).y = [holder.(body_part).y; NaN(short_number, 1)]; 
+            end
+
+            % Tell user.
+            if short_number ~= 0
+                disp(['Stack short by ' num2str(short_number) ' frames.']);
+            end
+
+            eval([type ' = holder;']);
+
+            % Save (overwrite previous)
+            save(filestring, type);
         end
-        % Tell user.
-        if short_number ~= 0
-            disp(['Stack short by ' num2str(short_number) ' frames.']);
-        end
-        % Save
-        save(filestring, 'velocity');
     end
 end
 
