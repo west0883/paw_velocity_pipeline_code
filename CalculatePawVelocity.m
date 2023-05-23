@@ -14,6 +14,8 @@ function [parameters] = CalculatePawVelocity(parameters)
 
     MessageToUser('Calculating ', parameters);
 
+    maximumOutlierCount = parameters.maximumOutlierCount;
+
     % If smoothing factor not given, make it = 1;
     if isfield(parameters, 'position_smoothing_factor')
         position_smoothing_factor = parameters.position_smoothing_factor;
@@ -47,9 +49,15 @@ function [parameters] = CalculatePawVelocity(parameters)
         % Remove outliers from position
         if isfield(parameters, 'removeOutliers') && parameters.removeOutliers 
             
-            x_outlier_indices = find(isoutlier(xposition, 'gesd'));
-            y_outlier_indices = find(isoutlier(yposition, 'gesd'));
-            
+            % don't remove if the number of non-NaNs is a certain level over
+            % the maximum outliers or less 
+            if (sum(~isnan(xposition)) < 10 * maximumOutlierCount) | sum(~isnan(yposition)) < 10 * maximumOutlierCount
+                % do nothing 
+            else
+                x_outlier_indices = find(isoutlier(xposition, 'gesd', 'MaxNumOutliers', maximumOutlierCount));
+                y_outlier_indices = find(isoutlier(yposition, 'gesd', 'MaxNumOutliers', maximumOutlierCount));
+            end
+
             % Remove each set of outliers from each vector 
             xposition([x_outlier_indices; y_outlier_indices]) = NaN;
             yposition([x_outlier_indices; y_outlier_indices]) = NaN;
@@ -96,13 +104,19 @@ function [parameters] = CalculatePawVelocity(parameters)
 
         % Remove outliers from velocity
         if isfield(parameters, 'removeOutliers') && parameters.removeOutliers 
-            
-            x_outlier_indices = find(isoutlier(xvelocity, 'gesd'));
-            y_outlier_indices = find(isoutlier(yvelocity, 'gesd'));
-            
-            % Remove each set of outliers from each vector 
-            xvelocity([x_outlier_indices; y_outlier_indices]) = NaN;
-            yvelocity([x_outlier_indices; y_outlier_indices]) = NaN;
+       
+            % don't remove if the number of non-NaNs is a certain level over
+            % the maximum outliers or less 
+            if (sum(~isnan(xvelocity)) < 10 * maximumOutlierCount) | sum(~isnan(yvelocity)) < 10 * maximumOutlierCount
+                % do nothing 
+            else
+                x_outlier_indices = find(isoutlier(xvelocity, 'gesd', 'MaxNumOutliers', maximumOutlierCount));
+                y_outlier_indices = find(isoutlier(yvelocity, 'gesd', 'MaxNumOutliers', maximumOutlierCount));
+                
+                % Remove each set of outliers from each vector 
+                xvelocity([x_outlier_indices; y_outlier_indices]) = NaN;
+                yvelocity([x_outlier_indices; y_outlier_indices]) = NaN;
+            end 
         end 
 
         % Smooth velocity 
@@ -149,7 +163,6 @@ function [parameters] = CalculatePawVelocity(parameters)
             old_xposition = xposition;
             old_yposition = yposition;
         
-
             remainder = rem(size(total_velocity_magnitude,1), ratio);
             
             % Reshape for averaging
