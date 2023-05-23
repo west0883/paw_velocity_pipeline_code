@@ -79,16 +79,8 @@ parameters.periods_spontaneous = periods_spontaneous;
 parameters.loop_variables.mice_all = parameters.mice_all;
 parameters.loop_variables.conditions = {'motorized'; 'spontaneous'};
 parameters.loop_variables.conditions_stack_locations = {'stacks'; 'spontaneous'};
-parameters.loop_list.body_parts = {'FR', 'FL', 'HL', 'tail', 'nose', 'eye'};
+parameters.loop_variables.body_parts = {'FR', 'FL', 'HL', 'tail', 'nose', 'eye'};
 
-% If it exists, load mice_all_no_missing_data.m
-if isfile([parameters.dir_exper 'behavior\body\mice_all_no_missing_data.mat'])
-    load([parameters.dir_exper 'behavior\body\mice_all_no_missing_data.mat']);
-
-    % put into loop_variables
-    parameters.loop_variables.mice_all_no_missing_data = mice_all_no_missing_data;
-
-end
 
 %% Import DeepLabCut paw/body extraction data. 
 % Calls ImportDLCPupilData.m, but that function doesn't really do anything,
@@ -124,60 +116,7 @@ parameters.loop_list.things_to_save.import_out.level = 'stack_name';
 
 RunAnalysis({@ImportDLCPupilData}, parameters)
 
-%% Search for data that wasn't imported -- all but m1099
-
-% Iterators
-parameters.loop_list.iterators = {
-               'mouse', {'loop_variables.mice_all(1:6).name'}, 'mouse_iterator'; 
-               'day', {'loop_variables.mice_all(', 'mouse_iterator', ').days(:).name'}, 'day_iterator';
-               'condition', {'loop_variables.conditions'}, 'condition_iterator';
-               'stack', {'getfield(loop_variables, {1}, "mice_all", {',  'mouse_iterator', '}, "days", {', 'day_iterator', '}, ', 'loop_variables.conditions_stack_locations{', 'condition_iterator', '})'}, 'stack_iterator'; 
-               };
-
-
-% Input values
-parameters.loop_list.things_to_check.dir = {[parameters.dir_exper 'behavior\body\extracted tracking\'], 'mouse', '\', 'day', '\'};
-parameters.loop_list.things_to_check.filename= {'trialbody', 'stack', '*.mat'}; 
-
-% Output
-parameters.loop_list.missing_data.dir = {[parameters.dir_exper 'behavior\body\']};
-parameters.loop_list.missing_data.filename = {'missing_data.mat'};
-
-SearchForData(parameters);
-
-
-%% Search for data that wasn't imported -- m1099 only
-
-parameters.mice_all = mice_all(7);
-parameters.loop_variables.mice_all = parameters.mice_all;
-
-% Iterators
-parameters.loop_list.iterators = {
-               'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
-               'day', {'loop_variables.mice_all(', 'mouse_iterator', ').days(:).name'}, 'day_iterator';
-               'condition', {'loop_variables.conditions'}, 'condition_iterator';
-               'stack', {'getfield(loop_variables, {1}, "mice_all", {',  'mouse_iterator', '}, "days", {', 'day_iterator', '}, ', 'loop_variables.conditions_stack_locations{', 'condition_iterator', '})'}, 'stack_iterator'; 
-               };
-
-
-% Input values
-parameters.loop_list.things_to_check.dir = {[parameters.dir_exper 'behavior\body\extracted tracking\'], 'mouse', '\', 'day', '\'};
-parameters.loop_list.things_to_check.filename= {'trialbody0', 'stack', '*.mat'};  % 'trialbody0'
-
-% Output
-parameters.loop_list.missing_data.dir = {[parameters.dir_exper 'behavior\body\']};
-parameters.loop_list.missing_data.filename = {'missing_data_m1099.mat'}; % {'missing_data_m1099.mat'};
-
-SearchForData(parameters);
-
-parameters.mice_all = mice_all;
-parameters.loop_variables.mice_all = parameters.mice_all;
-
-%% Make a mice_all that doesn't have the missing body data in it.
-% create_mice_all_no_missing_bodydata.m
-
 %% Calculate velocity by stack.
-% Using mice_all_no_missing_data
 % Always clear loop list first. 
 if isfield(parameters, 'loop_list')
 parameters = rmfield(parameters,'loop_list');
@@ -185,10 +124,10 @@ end
 
 % Iterators
 parameters.loop_list.iterators = {
-               'mouse', {'loop_variables.mice_all_no_missing_data(:).name'}, 'mouse_iterator'; 
-               'day', {'loop_variables.mice_all_no_missing_data(', 'mouse_iterator', ').days(:).name'}, 'day_iterator';
+               'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
+               'day', {'loop_variables.mice_all(', 'mouse_iterator', ').days(:).name'}, 'day_iterator';
                'condition', {'loop_variables.conditions'}, 'condition_iterator';
-               'stack', {'getfield(loop_variables, {1}, "mice_all_no_missing_data", {',  'mouse_iterator', '}, "days", {', 'day_iterator', '}, ', 'loop_variables.conditions_stack_locations{', 'condition_iterator', '})'}, 'stack_iterator'; 
+               'stack', {'getfield(loop_variables, {1}, "mice_all", {',  'mouse_iterator', '}, "days", {', 'day_iterator', '}, ', 'loop_variables.conditions_stack_locations{', 'condition_iterator', '})'}, 'stack_iterator'; 
                };
 
 % Remove outlier positions?
@@ -243,10 +182,10 @@ RunAnalysis({@CalculatePawVelocity}, parameters);
 parameters.filename_forcheck =  {[parameters.dir_exper 'behavior\body\paw velocity\'], 'mouse', '\', 'day', '\velocity', 'stack', '.mat'};
 
 parameters.loop_list.iterators = {
-               'mouse', {'loop_variables.mice_all_no_missing_data(:).name'}, 'mouse_iterator'; 
-               'day', {'loop_variables.mice_all_no_missing_data(', 'mouse_iterator', ').days(:).name'}, 'day_iterator';
+               'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
+               'day', {'loop_variables.mice_all(', 'mouse_iterator', ').days(:).name'}, 'day_iterator';
                'condition', {'loop_variables.conditions'}, 'condition_iterator';
-               'stack', {'getfield(loop_variables, {1}, "mice_all_no_missing_data", {',  'mouse_iterator', '}, "days", {', 'day_iterator', '}, ', 'loop_variables.conditions_stack_locations{', 'condition_iterator', '})'}, 'stack_iterator'; 
+               'stack', {'getfield(loop_variables, {1}, "mice_all", {',  'mouse_iterator', '}, "days", {', 'day_iterator', '}, ', 'loop_variables.conditions_stack_locations{', 'condition_iterator', '})'}, 'stack_iterator'; 
                };
 
 looping_output_list = LoopGenerator(parameters.loop_list, parameters.loop_variables); 
@@ -305,8 +244,11 @@ end
 % This is so the instances stay properly aligned with fluorescence data
 % Checks in \body\paw velocity\, puts into \body\paw velocity
 
+% Maybe this is where I wanted the no missing data? Not sure. It should be
+% accounted for in mice_all.
+
 % change to do with all body parts, with positions
-missing_body_data.m
+missing_body_data
 
 %% Convert to an easier structure format
 parameters.loop_list.iterators = {'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
@@ -374,7 +316,7 @@ parameters.loop_list.iterators = {'mouse', {'loop_variables.mice_all(:).name'}, 
 
 parameters.loop_variables.periods_spontaneous = periods_spontaneous.condition; 
 
-% Skip any files that don't exist (spontaneous or problem files)
+% Skip any files that don't exist (motorized or problem files)
 parameters.load_abort_flag = true; 
 
 % Dimension of different time range pairs.
