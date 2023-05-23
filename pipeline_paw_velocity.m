@@ -79,6 +79,7 @@ parameters.periods_spontaneous = periods_spontaneous;
 parameters.loop_variables.mice_all = parameters.mice_all;
 parameters.loop_variables.conditions = {'motorized'; 'spontaneous'};
 parameters.loop_variables.conditions_stack_locations = {'stacks'; 'spontaneous'};
+parameters.loop_list.body_parts = {'FR', 'FL', 'HL', 'tail', 'nose', 'eye'};
 
 % If it exists, load mice_all_no_missing_data.m
 if isfile([parameters.dir_exper 'behavior\body\mice_all_no_missing_data.mat'])
@@ -320,7 +321,6 @@ parameters.loop_list.iterators = {'mouse', {'loop_variables.mice_all(:).name'}, 
 if isfield(parameters, 'loop_list')
 parameters = rmfield(parameters,'loop_list');
 end
-parameters.loop_list.body_parts = {'FR', 'FL', 'HL'};
 
 % Iterators
 parameters.loop_list.iterators = {'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
