@@ -31,7 +31,7 @@ parameters.mice_all = mice_all;
 % Ex: numberVector=2:12; digitNumber=2;
 % Ex cont: stackList=ListStacks(numberVector,digitNumber); 
 % Ex cont: mice_all(1).stacks(1)=stackList;
-parameters.mice_all = parameters.mice_all;   
+parameters.mice_all = parameters.mice_all;
 
 % Give the number of digits that should be included in each stack number.
 parameters.digitNumber=2; 
@@ -79,7 +79,7 @@ parameters.loop_variables.mice_all = parameters.mice_all;
 parameters.loop_variables.conditions = {'motorized'; 'spontaneous'};
 parameters.loop_variables.conditions_stack_locations = {'stacks'; 'spontaneous'};
 parameters.loop_variables.body_parts = {'FR', 'FL', 'HL', 'tail', 'nose', 'eye'};
-
+parameters.loop_variables.data_types = {'velocity', 'position'};
 
 %% Import DeepLabCut paw/body extraction data. 
 % Calls ImportDLCPupilData.m, but that function doesn't really do anything,
@@ -154,7 +154,7 @@ parameters.maximumOutlierCount = 250;
 
 % Input 
 parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\extracted tracking\'], 'mouse', '\', 'day', '\'};
-parameters.loop_list.things_to_load.data.filename= {'trialbody', 'stack', '*.mat'}; % Has a variable middle part to the name
+parameters.loop_list.things_to_load.data.filename= {'trialbody0', 'stack', '*.mat'}; % Has a variable middle part to the name
 parameters.loop_list.things_to_load.data.variable= {'trial.data'}; 
 parameters.loop_list.things_to_load.data.level = 'stack';
 
@@ -177,90 +177,37 @@ RunAnalysis({@CalculatePawVelocity}, parameters);
 % steps will throw errors. 
 
 % Not running with RunAnalysis because you don't have to load each of them
-% to check their length.
+% to check their length. --> ***this didn't work, convert to uusing
+% RunAnalysis***
 
 % Folder/filenames you're checking.
-parameters.filename_forcheck =  {[parameters.dir_exper 'behavior\body\paw velocity\'], 'mouse', '\', 'day', '\velocity', 'stack', '.mat'};
+
+% Always clear loop list first. 
+if isfield(parameters, 'loop_list')
+parameters = rmfield(parameters,'loop_list');
+end
 
 parameters.loop_list.iterators = {
                'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
                'day', {'loop_variables.mice_all(', 'mouse_iterator', ').days(:).name'}, 'day_iterator';
                'condition', {'loop_variables.conditions'}, 'condition_iterator';
                'stack', {'getfield(loop_variables, {1}, "mice_all", {',  'mouse_iterator', '}, "days", {', 'day_iterator', '}, ', 'loop_variables.conditions_stack_locations{', 'condition_iterator', '})'}, 'stack_iterator'; 
+               'data_type', {'loop_variables.data_types'}, 'data_type_iterator';
                };
 
-looping_output_list = LoopGenerator(parameters.loop_list, parameters.loop_variables); 
+% Inputs
+parameters.loop_list.things_to_load.input_data.dir = {[parameters.dir_exper 'behavior\body\paw '], 'data_type','\', 'mouse', '\', 'day', '\'};
+parameters.loop_list.things_to_load.input_data.filename= {'data_type', 'stack', '.mat'};
+parameters.loop_list.things_to_load.input_data.variable= {'data_type'}; 
+parameters.loop_list.things_to_load.input_data.level = 'data_type';
 
-% For each element of looping_output_list, 
-for itemi = 1:size(looping_output_list,1)
+% Outputs (will overwrite the short stacks)
+parameters.loop_list.things_to_save.output_data.dir = {[parameters.dir_exper 'behavior\body\paw '], 'data_type','\', 'mouse', '\', 'day', '\'};
+parameters.loop_list.things_to_save.output_data.filename= {'data_type', 'stack', '.mat'};
+parameters.loop_list.things_to_save.output_data.variable= {'data_type'}; 
+parameters.loop_list.things_to_save.output_data.level = 'data_type';
 
-    % Get keywords, like in RunAnalysis
-    parameters.keywords = [parameters.loop_list.iterators(:,1); parameters.loop_list.iterators(:,3)];
-    
-    % Get values, like in RunAnalysis
-    parameters.values = cell(size(parameters.keywords));
-    for i = 1: numel(parameters.keywords)
-        parameters.values{i} = looping_output_list(itemi).(cell2mat(parameters.keywords(i)));
-    end
-
-    parameters.RunAnalysis_flag = true;
-    MessageToUser('Checking ', parameters);
-
-    % Get the filename 
-    filestring = CreateStrings(parameters.filename_forcheck, parameters.keywords, parameters.values);
-
-    % Usin matfile objects, check size of the file
-   if ~isfile(filestring)
-       continue
-   end
-
-    % mat_object = matfile(filestring);
-
-    % If less than frames
-    % if size(mat_object.velocity.FR.x, 1) < parameters.frames
-
-    types = {'velocity', 'position'};
-
-    for typei = 1:numel(types)
-        type = types{typei};
-        
-        % Get new filestring 
-        filename_new =  {[parameters.dir_exper 'behavior\body\paw ' type '\'], 'mouse', '\', 'day', ['\' type], 'stack', '.mat'};
-       
-        % Get the filename 
-        filestring = CreateStrings(filename_new, parameters.keywords, parameters.values);
-        
-        % Load.
-        holder = load(filestring, type);
-        holder = holder.(type);
-        
-        if size(holder.FL.total_magnitude, 1) < parameters.frames
-
-            % Pad 
-            short_number = parameters.frames - size(holder.FL.total_magnitude, 1);
-    
-            body_parts = parameters.loop_variables.body_parts;
-            % for each body part
-            for parti = 1:numel(body_parts)
-                body_part = body_parts{parti};
-                holder.(body_part).total_magnitude = [holder.(body_part).total_magnitude; NaN(short_number, 1)];
-                holder.(body_part).total_angle = [holder.(body_part).total_angle; NaN(short_number, 1)]; 
-                holder.(body_part).x = [holder.(body_part).x; NaN(short_number, 1)]; 
-                holder.(body_part).y = [holder.(body_part).y; NaN(short_number, 1)]; 
-            end
-
-            % Tell user.
-            if short_number ~= 0
-                disp(['Stack short by ' num2str(short_number) ' frames.']);
-            end
-
-            eval([type ' = holder;']);
-
-            % Save (overwrite previous)
-            save(filestring, type);
-        end
-    end
-end
+RunAnalysis({@PadVelocity}, parameters);
 
 %% If a stack of paw velocity is missing, a vector of NaNs is created.
 % This is so the instances stay properly aligned with fluorescence data
@@ -271,13 +218,6 @@ end
 
 % change to do with all body parts, with positions
 missing_body_data
-
-%% Convert to an easier structure format
-parameters.loop_list.iterators = {'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
-               'day', {'loop_variables.mice_all(', 'mouse_iterator', ').days(:).name'}, 'day_iterator';
-                   'stack', {'loop_variables.mice_all(',  'mouse_iterator', ').days(', 'day_iterator', ').stacks'}, 'stack_iterator'};
-                  
-% only keep totals, resave
 
 
 %% Motorized: Segment by behavior
