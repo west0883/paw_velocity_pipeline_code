@@ -19,6 +19,10 @@ parameters.input_filename = {[parameters.dir_exper 'behavior\body\paw velocity\'
 parameters.output_directory =  {[parameters.dir_exper 'behavior\body\paw velocity\'], 'mouse', '\', 'day', '\'};
 parameters.output_filename = {'velocity', 'stack', '.mat'};
 
+% for position data, too 
+parameters.output_directory_position =  {[parameters.dir_exper 'behavior\body\paw position\'], 'mouse', '\', 'day', '\'};
+parameters.output_filename_position = {'position', 'stack', '.mat'};
+
 % Directory/filename for where to save list of missing data.
 parameters.missing_data_filename =  [parameters.dir_exper '\behavior\body\missing_body_data.mat'];
 
@@ -71,13 +75,17 @@ parameters.keywords = {'mouse', 'day', 'stack'};
 % Make the vector of NaNs (with a variable name that matches the other files 
 % in output folder). (frames x 1)
 % for each body part,
-body_parts = {'FR', 'FL', 'HL'};
+body_parts = {'FR', 'FL', 'HL', 'tail', 'nose', 'eye'};
 for parti = 1:numel(body_parts)
     body_part = body_parts{parti};
     velocity.(body_part).x = NaN(parameters.frames, 1);
     velocity.(body_part).y = NaN(parameters.frames, 1);
-    velocity.(body_part).total = NaN(parameters.frames, 1);
+    velocity.(body_part).total_magnitude = NaN(parameters.frames, 1);
+    velocity.(body_part).total_angle = NaN(parameters.frames, 1);
 end
+
+% replicate for positions
+position = velocity;
 
 % For each entry in missing_data,
 for itemi = 1:size(missing_data,1)
@@ -94,6 +102,18 @@ for itemi = 1:size(missing_data,1)
     % Save the NaN vector under the name of the missing data stack.
     save([dir_string filestring], 'velocity');
 
+    % repeat for position
+    % Make directory & filenames
+    dir_string_position = CreateStrings(parameters.output_directory_position, parameters.keywords, missing_data(itemi, :));
+    filestring_position = CreateStrings(parameters.output_filename_position, parameters.keywords, missing_data(itemi, :));
+
+    % Make output directory, if it doesn't already exist.
+    if ~exist(dir_string_position, 'dir')
+        mkdir(dir_string_position);
+    end
+
+    % Save the NaN vector under the name of the missing data stack.
+    save([dir_string_position filestring_position], 'position');
 end
 
 
