@@ -5,42 +5,12 @@
 % A script that finds stacks that don't have body data & creates vectors of
 % NaN for the paw velocity.
 
-%% Initial setup
-% Create the experiment name. This is used to name the output folder. 
-parameters.experiment_name='Random Motorized Treadmill';
-
-% Output directory name bases
-parameters.dir_base='Y:\Sarah\Analysis\Experiments\';
-parameters.dir_exper=[parameters.dir_base parameters.experiment_name '\']; 
-
-% (DON'T EDIT). Load the "mice_all" variable you've created with "create_mice_all.m"
-load([parameters.dir_exper 'mice_all.mat']);
-
-% Add mice_all to parameters structure.
-parameters.mice_all = mice_all; 
-
-% ****Change here if there are specific mice, days, and/or stacks you want to work with**** 
-% If you want to change the list of stacks, use ListStacks function.
-% Ex: numberVector=2:12; digitNumber=2;
-% Ex cont: stackList=ListStacks(numberVector,digitNumber); 
-% Ex cont: mice_all(1).stacks(1)=stackList;
-parameters.mice_all = parameters.mice_all;
-
-% Give the number of digits that should be included in each stack number.
-parameters.digitNumber=2; 
-digitChar = num2str(parameters.digitNumber);
-
 % Number of frames in recording (after the "skip" number of frames).
 parameters.frames = 6000;
 
 % Initialize list of missing stacks (cell of mouse, day, stack number as
 % columns, each stack is own row)
 missing_data = cell(1, 3);
-
-% Loop variables.
-parameters.loop_variables.mice_all = parameters.mice_all;
-parameters.loop_variables.conditions = {'motorized'; 'spontaneous'};
-parameters.loop_variables.conditions_stack_locations = {'stacks'; 'spontaneous'};
 
 % Directory/filename you're looking at for each potentially missing stack.
 parameters.input_filename = {[parameters.dir_exper 'behavior\body\paw velocity\'], 'mouse', '\', 'day', '\', 'velocity', 'stack', '.mat'};
