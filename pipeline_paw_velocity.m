@@ -75,7 +75,7 @@ parameters.periods_spontaneous = periods_spontaneous;
 parameters.loop_variables.mice_all = parameters.mice_all;
 parameters.loop_variables.conditions = {'motorized'; 'spontaneous'};
 parameters.loop_variables.conditions_stack_locations = {'stacks'; 'spontaneous'};
-parameters.loop_variables.body_parts = {'FR', 'FL', 'HL', 'tail', 'nose', 'eye'};
+parameters.loop_variables.body_parts = {'nose', 'eye'}; % {'FR', 'FL', 'HL', 'tail', 'nose', 'eye'};
 parameters.loop_variables.velocity_directions = {'x', 'y', 'total_magnitude', 'total_angle'};
 parameters.loop_variables.data_types = {'velocity', 'position'};
 
@@ -273,6 +273,8 @@ end
 parameters.loop_list.iterators = {'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
                'day', {'loop_variables.mice_all(', 'mouse_iterator', ').days(:).name'}, 'day_iterator';
                    'stack', {'loop_variables.mice_all(',  'mouse_iterator', ').days(', 'day_iterator', ').spontaneous'}, 'stack_iterator';
+                   'body_part', {'loop_variables.body_parts'}, 'body_part_iterator';
+                   'velocity_direction', {'loop_variables.velocity_directions'}, 'velocity_direction_iterator';
                    'period', {'loop_variables.periods_spontaneous{:}'}, 'period_iterator'};
 
 parameters.loop_variables.periods_spontaneous = periods_spontaneous.condition; 
@@ -291,7 +293,7 @@ parameters.concatDim = 2;
 % Extracted timeseries.
 parameters.loop_list.things_to_load.timeseries.dir = {[parameters.dir_exper 'behavior\body\paw velocity\'], 'mouse', '\', 'day', '\'};
 parameters.loop_list.things_to_load.timeseries.filename= {'velocity', 'stack', '.mat'};
-parameters.loop_list.things_to_load.timeseries.variable= {'velocity'}; 
+parameters.loop_list.things_to_load.timeseries.variable= {'velocity.', 'body_part', '.', 'velocity_direction'}; 
 parameters.loop_list.things_to_load.timeseries.level = 'stack';
 % Time ranges
 parameters.loop_list.things_to_load.time_ranges.dir = {[parameters.dir_exper 'behavior\spontaneous\segmented behavior periods\'], 'mouse', '\', 'day', '\'};
@@ -301,10 +303,10 @@ parameters.loop_list.things_to_load.time_ranges.level = 'stack';
 
 % Output Values
 % (Convert to cell format to be compatible with motorized in below code)
-parameters.loop_list.things_to_save.segmented_timeseries.dir = {[parameters.dir_exper 'behavior\body\segmented velocities\'], 'body_part', '\spontaneous\', 'mouse', '\', 'day', '\'};
-parameters.loop_list.things_to_save.segmented_timeseries.filename= {'segmented_timeseries_', 'body_part', '_', 'stack', '.mat'};
-parameters.loop_list.things_to_save.segmented_timeseries.variable= {'segmented_timeseries'}; 
-parameters.loop_list.things_to_save.segmented_timeseries.level = 'body_part';
+parameters.loop_list.things_to_save.segmented_timeseries.dir = {[parameters.dir_exper 'behavior\body\segmented velocities\'], 'body_part', '\', 'velocity_direction', '\spontaneous\', 'mouse', '\', 'day', '\'};
+parameters.loop_list.things_to_save.segmented_timeseries.filename= {'segmented_timeseries__', 'stack', '.mat'};
+parameters.loop_list.things_to_save.segmented_timeseries.variable= {'segmented_timeseries{', 'period_iterator', '}'}; 
+parameters.loop_list.things_to_save.segmented_timeseries.level = 'velocity_direction';
 
 RunAnalysis({@SegmentTimeseriesData}, parameters);
 
@@ -317,6 +319,8 @@ end
 % Iterators
 parameters.loop_list.iterators = {
                'condition', {'loop_variables.conditions'}, 'condition_iterator';
+               'body_part', {'loop_variables.body_parts'}, 'body_part_iterator';
+               'velocity_direction', {'loop_variables.velocity_directions'}, 'velocity_direction_iterator';
                'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
                'day', {'loop_variables.mice_all(', 'mouse_iterator', ').days(:).name'}, 'day_iterator';
                'stack', {'getfield(loop_variables, {1}, "mice_all", {',  'mouse_iterator', '}, "days", {', 'day_iterator', '}, ', 'loop_variables.conditions_stack_locations{', 'condition_iterator', '})'}, 'stack_iterator'; 
@@ -332,13 +336,13 @@ if isfield(parameters, 'reshapeDims')
 end
 
 % Input Values
-parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\segmented paw velocity\'],'condition', '\' 'mouse', '\', 'day', '\'};
-parameters.loop_list.things_to_load.data.filename= {'segmented_timeseries_', 'stack', '.mat'};
+parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\segmented velocities\'], 'body_part', '\', 'velocity_direction', '\', 'condition', '\', 'mouse', '\', 'day', '\'};
+parameters.loop_list.things_to_load.data.filename= {'segmented_timeseries__', 'stack', '.mat'};
 parameters.loop_list.things_to_load.data.variable= {'segmented_timeseries'}; 
 parameters.loop_list.things_to_load.data.level = 'stack';
 
 % Output values
-parameters.loop_list.things_to_save.concatenated_data.dir = {[parameters.dir_exper 'behavior\body\concatenated velocity\'], 'condition', '\', 'mouse', '\'};
+parameters.loop_list.things_to_save.concatenated_data.dir = {[parameters.dir_exper 'behavior\body\concatenated velocity\'], 'body_part', '\', 'velocity_direction', '\', 'condition', '\', 'mouse', '\'};
 parameters.loop_list.things_to_save.concatenated_data.filename= {'concatenated_velocity_all_periods.mat'};
 parameters.loop_list.things_to_save.concatenated_data.variable= {'velocity'}; 
 parameters.loop_list.things_to_save.concatenated_data.level = 'mouse';
