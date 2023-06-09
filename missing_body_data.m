@@ -16,7 +16,7 @@ missing_data = cell(1, 3);
 parameters.input_filename = {[parameters.dir_exper 'behavior\body\paw velocity\'], 'mouse', '\', 'day', '\', 'velocity', 'stack', '.mat'};
 
 % Output filename
-parameters.output_directory =  {[parameters.dir_exper 'behavior\body\paw velocity with missing\'], 'mouse', '\', 'day', '\'};
+parameters.output_directory =  {[parameters.dir_exper 'behavior\body\paw velocity\'], 'mouse', '\', 'day', '\'};
 parameters.output_filename = {'velocity', 'stack', '.mat'};
 
 % Directory/filename for where to save list of missing data.
