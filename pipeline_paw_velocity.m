@@ -73,9 +73,9 @@ parameters.periods_spontaneous = periods_spontaneous;
 
 % Loop variables.
 parameters.loop_variables.mice_all = parameters.mice_all;
-parameters.loop_variables.conditions = {'motorized'; 'spontaneous'};
-parameters.loop_variables.conditions_stack_locations = {'stacks'; 'spontaneous'};
-parameters.loop_variables.body_parts = {'nose', 'eye'}; % {'FR', 'FL', 'HL', 'tail', 'nose', 'eye'};
+parameters.loop_variables.conditions =   {'motorized'; 'spontaneous'};
+parameters.loop_variables.conditions_stack_locations =  {'stacks'; 'spontaneous'};
+parameters.loop_variables.body_parts =  {'FR', 'FL', 'HL', 'tail', 'nose', 'eye'};
 parameters.loop_variables.velocity_directions = {'x', 'y', 'total_magnitude', 'total_angle'};
 parameters.loop_variables.data_types = {'velocity', 'position'};
 
@@ -305,7 +305,7 @@ parameters.loop_list.things_to_load.time_ranges.level = 'stack';
 % (Convert to cell format to be compatible with motorized in below code)
 parameters.loop_list.things_to_save.segmented_timeseries.dir = {[parameters.dir_exper 'behavior\body\segmented velocities\'], 'body_part', '\', 'velocity_direction', '\spontaneous\', 'mouse', '\', 'day', '\'};
 parameters.loop_list.things_to_save.segmented_timeseries.filename= {'segmented_timeseries__', 'stack', '.mat'};
-parameters.loop_list.things_to_save.segmented_timeseries.variable= {'segmented_timeseries{', 'period_iterator', '}'}; 
+parameters.loop_list.things_to_save.segmented_timeseries.variable= {'segmented_timeseries{', 'period_iterator', ', 1}'}; 
 parameters.loop_list.things_to_save.segmented_timeseries.level = 'velocity_direction';
 
 RunAnalysis({@SegmentTimeseriesData}, parameters);
@@ -355,22 +355,26 @@ parameters = rmfield(parameters,'loop_list');
 end
 
 % Is so you can use a single loop for calculations. 
-parameters.loop_list.iterators = {'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
+parameters.loop_list.iterators = {
+               'body_part', {'loop_variables.body_parts'}, 'body_part_iterator';
+               'velocity_direction', {'loop_variables.velocity_directions'}, 'velocity_direction_iterator';
+               'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
                'condition', 'loop_variables.conditions', 'condition_iterator';
                 };
 
 % Tell it to concatenate across cells, not within cells. 
 parameters.concatenate_across_cells = true; 
 parameters.concatDim = 1;
+parameters.concatenation_level = 'condition';
 
 % Input Values 
-parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\concatenated velocity\'], 'condition', '\', 'mouse', '\'};
+parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\concatenated velocity\'], 'body_part', '\', 'velocity_direction', '\', 'condition', '\', 'mouse', '\'};
 parameters.loop_list.things_to_load.data.filename= {'concatenated_velocity_all_periods.mat'};
 parameters.loop_list.things_to_load.data.variable= {'velocity'}; 
 parameters.loop_list.things_to_load.data.level = 'condition';
 
 % Output values
-parameters.loop_list.things_to_save.concatenated_data.dir = {[parameters.dir_exper 'behavior\body\concatenated velocity\both conditions\'], 'mouse', '\'};
+parameters.loop_list.things_to_save.concatenated_data.dir = {[parameters.dir_exper 'behavior\body\concatenated velocity\'], 'body_part', '\', 'velocity_direction', '\both conditions\', 'mouse', '\'};
 parameters.loop_list.things_to_save.concatenated_data.filename= {'concatenated_velocity_all_periods.mat'};
 parameters.loop_list.things_to_save.concatenated_data.variable= {'velocity_all'}; 
 parameters.loop_list.things_to_save.concatenated_data.level = 'mouse';
@@ -387,9 +391,12 @@ parameters = rmfield(parameters,'loop_list');
 end
 
 % Iterators
-parameters.loop_list.iterators = {'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
-               'period', {'loop_variables.periods'}, 'period_iterator';            
-               };
+parameters.loop_list.iterators = {
+               'body_part', {'loop_variables.body_parts'}, 'body_part_iterator';
+               'velocity_direction', {'loop_variables.velocity_directions'}, 'velocity_direction_iterator';
+               'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
+               'period', {'loop_variables.periods'}, 'period_iterator';
+                };
 parameters.loop_variables.mice_all = parameters.mice_all;
 parameters.loop_variables.periods = periods_bothConditions.condition;
 
@@ -402,18 +409,18 @@ parameters.windowSize = 20;
 parameters.stepSize = 5; 
 
 % Input 
-parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\concatenated paw velocity\both conditions\'], 'mouse', '\'};
+parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\concatenated velocity\'], 'body_part', '\', 'velocity_direction', '\both conditions\', 'mouse', '\'};
 parameters.loop_list.things_to_load.data.filename= {'concatenated_velocity_all_periods.mat'};
 parameters.loop_list.things_to_load.data.variable= {'velocity_all{', 'period_iterator', '}'}; 
 parameters.loop_list.things_to_load.data.level = 'mouse';
 
 % Output
-parameters.loop_list.things_to_save.data_rolled.dir = {[parameters.dir_exper 'behavior\body\rolled concatenated paw velocity\'], 'mouse', '\'};
+parameters.loop_list.things_to_save.data_rolled.dir = {[parameters.dir_exper 'behavior\body\rolled concatenated velocity\'], 'body_part', '\', 'velocity_direction', '\both conditions\', 'mouse', '\'};
 parameters.loop_list.things_to_save.data_rolled.filename= {'velocity_rolled.mat'};
 parameters.loop_list.things_to_save.data_rolled.variable= {'velocity_rolled{', 'period_iterator', ',1}'}; 
 parameters.loop_list.things_to_save.data_rolled.level = 'mouse';
 
-parameters.loop_list.things_to_save.roll_number.dir = {[parameters.dir_exper 'behavior\body\rolled concatenated paw velocites\'], 'mouse', '\'};
+parameters.loop_list.things_to_save.roll_number.dir = {[parameters.dir_exper 'behavior\body\rolled concatenated velocity\'], 'body_part', '\', 'velocity_direction', '\both conditions\', 'mouse', '\'};
 parameters.loop_list.things_to_save.roll_number.filename= {'velocity_rolled_rollnumber.mat'};
 parameters.loop_list.things_to_save.roll_number.variable= {'roll_number{', 'period_iterator', ',1}'}; 
 parameters.loop_list.things_to_save.roll_number.level = 'mouse';
