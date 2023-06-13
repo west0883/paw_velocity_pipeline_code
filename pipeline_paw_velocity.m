@@ -78,6 +78,7 @@ parameters.loop_variables.conditions_stack_locations =  {'stacks'; 'spontaneous'
 parameters.loop_variables.body_parts =  {'FR', 'FL', 'HL', 'tail', 'nose', 'eye'};
 parameters.loop_variables.velocity_directions = {'x', 'y', 'total_magnitude', 'total_angle'};
 parameters.loop_variables.data_types = {'velocity', 'position'};
+parameters.loop_variables.periods = periods_bothConditions.condition;
 
 %% Import DeepLabCut paw/body extraction data. 
 % Calls ImportDLCPupilData.m, but that function doesn't really do anything,
@@ -427,13 +428,57 @@ parameters.loop_list.things_to_save.roll_number.level = 'mouse';
 
 RunAnalysis({@RollData}, parameters);
 
-%% Check paw velocities of rest periods.
-% Mark instances with struggling/fidgeting for removal.
-% (motorized rest, spontaneous rest, spontaneous prewalk,spontaneous post walk,
-% rest warning periods, rest maintaining)
+%% Take mean velocity per roll 
+% **** fix this --> isn't putting things in the right place ***
 
-%% Remove struggling/fidgeting instances
-% From fluorescence, correlations, spon treadmill velocity, pupil diameter.
-% Do this on rolled & concatenated versions of each, for simplicity.
+if isfield(parameters, 'loop_list')
+parameters = rmfield(parameters,'loop_list');
+end
 
+% Iterators
+parameters.loop_list.iterators = {
+               'body_part', {'loop_variables.body_parts'}, 'body_part_iterator';
+               'velocity_direction', {'loop_variables.velocity_directions'}, 'velocity_direction_iterator';
+               'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
+               'period', {'loop_variables.periods'}, 'period_iterator';
+                };
+
+% Permute data so instances are in last dimension 
+parameters.DimOrder = [1, 3, 2];
+
+% Dimension to average across 
+parameters.averageDim  = 1; 
+
+% Load & put in the "true" roll number there's supposed to be.
+load([parameters.dir_exper 'behavior\spontaneous\rolled concatenated velocity\1087\velocity_rolled_rollnumber.mat'], 'roll_number'); 
+parameters.roll_number = roll_number;
+clear roll_number;
+
+parameters.useSqueeze = false;
+
+% Evaluation instructions (removes first dimension that alwas = 1)
+parameters.evaluation_instructions = {{}; {};{ 'z = size(parameters.data);'...
+                                               'data_evaluated = reshape(parameters.data,[z(2:end) 1]);'}};
+  
+% Input
+parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\rolled concatenated velocity\'], 'body_part', '\', 'velocity_direction', '\both conditions\', 'mouse', '\'};
+parameters.loop_list.things_to_load.data.filename= {'velocity_rolled.mat'};
+parameters.loop_list.things_to_load.data.variable= {'velocity_rolled{', 'period_iterator', ',1}'}; 
+parameters.loop_list.things_to_load.data.level = 'mouse';
+% roll number 
+parameters.loop_list.things_to_load.roll_number.dir = {[parameters.dir_exper]};
+parameters.loop_list.things_to_load.roll_number.filename= {'roll_number.mat'};
+parameters.loop_list.things_to_load.roll_number.variable= {'roll_number{', 'period_iterator', ',1}'}; 
+parameters.loop_list.things_to_load.roll_number.level = 'start';
+
+% Output 
+parameters.loop_list.things_to_save.data_evaluated.dir = {[parameters.dir_exper 'behavior\body\value per roll velocity\'], 'body_part', '\', 'velocity_direction', '\', 'mouse', '\'};
+parameters.loop_list.things_to_save.data_evaluated.filename= {'velocity_averaged_by_instance.mat'};
+parameters.loop_list.things_to_save.data_evaluated.variable= {'velocity_averaged_by_instance{', 'period_iterator', ',1}'}; 
+parameters.loop_list.things_to_save.data_evaluated.level = 'mouse';
+
+parameters.loop_list.things_to_rename = {{'data_permuted', 'data'}; 
+                                         { 'average', 'data'}};
+
+RunAnalysis({@PermuteData, @AverageData, @EvaluateOnData}, parameters);
 
