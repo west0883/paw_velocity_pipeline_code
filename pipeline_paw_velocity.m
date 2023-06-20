@@ -311,6 +311,104 @@ parameters.loop_list.things_to_save.segmented_timeseries.level = 'velocity_direc
 
 RunAnalysis({@SegmentTimeseriesData}, parameters);
 
+%% %% Look for stacks when number of instances don't match those of fluorescence.
+% (Just do motorized rest, that's the one you're having problems with).
+% Don't need to load, so don't use RunAnalysis.
+% Only need to run 1 body part & velocity direction (FL, total magnitude).
+if isfield(parameters, 'loop_list')
+parameters = rmfield(parameters,'loop_list');
+end
+
+parameters.loop_list.iterators = {
+               'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
+               'day', {'loop_variables.mice_all(', 'mouse_iterator', ').days(:).name'}, 'day_iterator';
+               'condition', {'loop_variables.conditions'}, 'condition_iterator';
+               'stack', {'getfield(loop_variables, {1}, "mice_all", {',  'mouse_iterator', '}, "days", {', 'day_iterator', '}, ', 'loop_variables.conditions_stack_locations{', 'condition_iterator', '})'}, 'stack_iterator';
+               };
+
+% If using a sub-structure, need to use regular loading
+parameters.use_substructure = true; 
+
+parameters.checkingDim = 2;
+parameters.check_againstDim = 3;
+
+% Input values
+parameters.loop_list.things_to_check.dir = {[parameters.dir_exper 'behavior\body\segmented velocities\FL\total_magnitude\'], 'condition', '\', 'mouse', '\', 'day', '\'};
+parameters.loop_list.things_to_check.filename= {'segmented_timeseries__', 'stack', '.mat'};  
+parameters.loop_list.things_to_check.variable = {'segmented_timeseries'};
+
+parameters.loop_list.check_against.dir = {[parameters.dir_exper 'fluorescence analysis\segmented timeseries\'], 'condition', '\', 'mouse', '\', 'day', '\'};
+parameters.loop_list.check_against.filename= {'segmented_timeseries_', 'stack', '.mat'};  
+parameters.loop_list.check_against.variable = {'segmented_timeseries'};
+
+% Output
+parameters.loop_list.mismatched_data.dir = {[parameters.dir_exper 'behavior\body\']};
+parameters.loop_list.mismatched_data.filename= {'mismatched_data.mat'};
+
+CheckSizes2(parameters);
+
+%% Notes for removal.
+% For these, can get rid of last instances and will match
+
+% load the mismatch info
+load('Y:\Sarah\Analysis\Experiments\Random Motorized Treadmill\behavior\body\mismatched_data.mat');
+
+% For each mismatch,
+for itemi = 2:size(mismatched_data, 1)
+
+    mouse = mismatched_data{itemi, 1};
+    day = mismatched_data{itemi, 2};
+    condition = mismatched_data{itemi, 3};
+    stack = mismatched_data{itemi, 4};
+    period_index = mismatched_data{itemi, 5};
+    
+    disp([mouse ', ' day ', ' condition ', ' stack ', ' period_index]);
+   
+    % load the flourescence data 
+    load(['Y:\Sarah\Analysis\Experiments\Random Motorized Treadmill\fluorescence analysis\segmented timeseries\' condition '\' mouse '\' day '\segmented_timeseries_' stack '.mat'])
+    fluor = segmented_timeseries;
+
+    % find number of instances you should have
+    % if empty, make it set = 0 (because 3rd dim will be 1)
+    if  ~isempty(fluor{period_index})
+        correct_num = size(fluor{period_index}, 3);
+    else
+        correct_num = 0;
+    end   
+
+    % tell user the calculated correct number
+    disp(num2str(correct_num));
+    
+    % For each body part
+    for bodyparti = 1:numel(parameters.loop_variables.body_parts) 
+        bodypart = parameters.loop_variables.body_parts{bodyparti};
+        disp(bodypart);
+        
+        % For each velocity direction,
+        for directioni = 1:numel(parameters.loop_variables.velocity_directions)
+            direction = parameters.loop_variables.velocity_directions{directioni};
+            disp(direction);
+
+            % Load velocity
+            load(['Y:\Sarah\Analysis\Experiments\Random Motorized Treadmill\behavior\body\segmented velocities\' bodypart '\' direction '\' condition '\' mouse '\' day '\segmented_timeseries__' stack '.mat'])
+            velocity_original = segmented_timeseries;
+           
+            % Shorten the number of instances to match fluorescence
+            velocity_new = velocity_original;
+            velocity_new{period_index} = velocity_original{period_index}(1:correct_num);
+
+            % Convert back to saving variable name
+            segmented_timeseries = velocity_new; 
+           
+            % Save in same place
+            save(['Y:\Sarah\Analysis\Experiments\Random Motorized Treadmill\behavior\body\segmented velocities\' bodypart '\' direction '\' condition '\' mouse '\' day '\segmented_timeseries__' stack '.mat'], 'segmented_timeseries')
+            
+            % Save the original
+            save(['Y:\Sarah\Analysis\Experiments\Random Motorized Treadmill\behavior\body\segmented velocities\' bodypart '\' direction '\' condition '\' mouse '\' day '\segmented_timeseries__' stack '_original.mat'], 'velocity_original')
+        end 
+    end 
+end 
+
 %% Concatenate within behavior (spon & motorized independently) 
 % Always clear loop list first. 
 if isfield(parameters, 'loop_list')
