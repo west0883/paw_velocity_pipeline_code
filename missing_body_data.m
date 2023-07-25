@@ -13,14 +13,14 @@ parameters.frames = 6000;
 missing_data = cell(1, 3);
 
 % Directory/filename you're looking at for each potentially missing stack.
-parameters.input_filename = {[parameters.dir_exper 'behavior\body\paw velocity\'], 'mouse', '\', 'day', '\', 'velocity', 'stack', '.mat'};
+parameters.input_filename = {[parameters.dir_exper 'behavior\body\normalized\paw velocity normalized with total magnitude\'], 'mouse', '\', 'day', '\', 'velocity', 'stack', '.mat'};
 
 % Output filename
-parameters.output_directory =  {[parameters.dir_exper 'behavior\body\paw velocity\'], 'mouse', '\', 'day', '\'};
+parameters.output_directory =  {[parameters.dir_exper 'behavior\body\normalized\paw velocity normalized with total magnitude\'], 'mouse', '\', 'day', '\'};
 parameters.output_filename = {'velocity', 'stack', '.mat'};
 
 % for position data, too 
-parameters.output_directory_position =  {[parameters.dir_exper 'behavior\body\paw position\'], 'mouse', '\', 'day', '\'};
+parameters.output_directory_position =  {[parameters.dir_exper 'behavior\body\normalized\paw position normalized with total magnitude\'], 'mouse', '\', 'day', '\'};
 parameters.output_filename_position = {'position', 'stack', '.mat'};
 
 % Directory/filename for where to save list of missing data.
