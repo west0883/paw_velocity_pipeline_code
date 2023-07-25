@@ -23,7 +23,7 @@ function [parameters] = PadVelocity(parameters)
         for parti = 1:numel(body_parts)
             body_part = body_parts{parti};
             output_data.(body_part).total_magnitude = [output_data.(body_part).total_magnitude; NaN(short_number, 1)];
-            output_data.(body_part).total_angle = [output_data.(body_part).total_angle; NaN(short_number, 1)]; 
+            %output_data.(body_part).total_angle = [output_data.(body_part).total_angle; NaN(short_number, 1)]; 
             output_data.(body_part).x = [output_data.(body_part).x; NaN(short_number, 1)]; 
             output_data.(body_part).y = [output_data.(body_part).y; NaN(short_number, 1)]; 
         end
