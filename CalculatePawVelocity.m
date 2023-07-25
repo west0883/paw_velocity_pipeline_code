@@ -80,22 +80,23 @@ function [parameters] = CalculatePawVelocity(parameters)
 
         % add/subtract radians to get the angle into the correct quadrant
         % based on if xposition and/or yposition are negative. 
+        % add/subtract radians to get the angle into the correct quadrant
+        % based on if xvelocity and/or yvelocity are negative. 
         negx = xposition < 0; 
         negy = yposition < 0; 
+        posx = xposition > 0;
+        posy = yposition > 0; 
 
         % if both are positive, change nothing (quadrant 1 to 1)
 
-        % if x is positive, y is negative, change nothing (quadrant 4 to 4)
+        % if x is positive, y is negative, subtract from 2pi (quad 4)
+        xposyneg = posx & negy; 
+        total_position_angle(xposyneg) = 2 * pi - total_position_angle(xposyneg);
 
         % if x is negative, y is postive, swing from quadrant 1 to 2 
             % subtract from pi radians
-
-        % if both are negative, swing from quadrant 1 to quadrant 3
-            % subtract from pi radians (add the abs value) 
-
-        indices = (xposition < 0 & yposition > 0) | (xposition < 0 & yposition < 0);
-
-        total_position_angle(indices) = pi - total_position_angle(indices);
+        xnegypos = negx & posy; 
+        total_position_angle(xnegypos) = pi - total_position_angle(xnegypos);
 
         %%%%%% VELOCITY %%%%%
         % Now calculate velocity.
@@ -133,20 +134,24 @@ function [parameters] = CalculatePawVelocity(parameters)
         % based on if xvelocity and/or yvelocity are negative. 
         negx = xvelocity < 0; 
         negy = yvelocity < 0; 
+        posx = xvelocity > 0;
+        posy = yvelocity > 0; 
 
         % if both are positive, change nothing (quadrant 1 to 1)
 
-        % if x is positive, y is negative, change nothing (quadrant 4 to 4)
+        % if x is positive, y is negative, subtract from 2pi (quad 4)
+        xposyneg = posx & negy; 
+        total_velocity_angle(xposyneg) = 2 * pi - total_velocity_angle(xposyneg);
 
         % if x is negative, y is postive, swing from quadrant 1 to 2 
             % subtract from pi radians
+        xnegypos = negx & posy; 
+        total_velocity_angle(xnegypos) = pi - total_velocity_angle(xnegypos);
 
         % if both are negative, swing from quadrant 1 to quadrant 3
-            % subtract from pi radians (add the abs value) 
-
-        indices = (xvelocity < 0 & yvelocity > 0) | (xvelocity < 0 & yvelocity < 0);
-
-        total_velocity_angle(indices) = pi - total_velocity_angle(indices);
+            % add to pi radians
+        xnegyneg = negx & negy; 
+        total_velocity_angle(xnegyneg) = pi + total_velocity_angle(xnegyneg);
  
         %%%%%% DOWNSAMPLE BOTH %%%%%
         % Downsample to match fluorescence frames per second, if necessary.
