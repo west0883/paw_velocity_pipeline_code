@@ -853,3 +853,38 @@ parameters.loop_list.things_to_rename = {{'data_permuted', 'data'};
 
 RunAnalysis({@PermuteData, @AverageData, @EvaluateOnData}, parameters);
 
+%% Velocity for fluorescence PLSR
+% Instead of rolling velocity, reshape so each time point is its own instance
+% (Is for fluorescence PLSR)
+
+% Put into same cell array, to match other formatting
+
+% Always clear loop list first. 
+if isfield(parameters, 'loop_list')
+parameters = rmfield(parameters,'loop_list');
+end
+
+% Iterators
+parameters.loop_list.iterators = {
+               'body_part', {'loop_variables.body_parts'}, 'body_part_iterator';
+               'velocity_direction', {'loop_variables.velocity_directions'}, 'velocity_direction_iterator';
+               'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
+               'period', {'loop_variables.periods'}, 'period_iterator';
+                };
+
+
+% one column, timepoints of each instance are together 
+parameters.evaluation_instructions = {{'data_evaluated = transpose(reshape(parameters.data, [], 1));'}};
+% Input 
+parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\normalized with zscore\concatenated velocity\'], 'body_part', '\', 'velocity_direction', '\both conditions\', 'mouse', '\'};
+parameters.loop_list.things_to_load.data.filename= {'concatenated_velocity_all_periods.mat'};
+parameters.loop_list.things_to_load.data.variable= {'velocity_all{', 'period_iterator', '}'}; 
+parameters.loop_list.things_to_load.data.level = 'mouse';
+
+% Output
+parameters.loop_list.things_to_save.data_evaluated.dir = {[parameters.dir_exper 'behavior\body\normalized with zscore\velocity for fluorescence PLSR\'], 'body_part', '\', 'velocity_direction', '\',  'mouse', '\'};
+parameters.loop_list.things_to_save.data_evaluated.filename= {'velocity_forFluorescence.mat'};
+parameters.loop_list.things_to_save.data_evaluated.variable= {'velocity_forFluorescence{', 'period_iterator', ', 1}'}; 
+parameters.loop_list.things_to_save.data_evaluated.level = 'mouse';
+
+RunAnalysis({@EvaluateOnData}, parameters);
