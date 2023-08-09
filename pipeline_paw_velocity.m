@@ -80,6 +80,7 @@ parameters.loop_variables.xys = {'x', 'y'};
 parameters.loop_variables.velocity_directions = {'x', 'y' , 'total_magnitude'}; % 'total_angle'
 parameters.loop_variables.data_types = {'velocity', 'position'};
 parameters.loop_variables.periods = periods_bothConditions.condition;
+parameters.loop_variables.mean_stds = {'average', 'std_dev'};
 
 %% Import DeepLabCut paw/body extraction data. 
 % Calls ImportDLCPupilData.m, but that function doesn't really do anything,
@@ -886,5 +887,275 @@ parameters.loop_list.things_to_save.data_evaluated.dir = {[parameters.dir_exper 
 parameters.loop_list.things_to_save.data_evaluated.filename= {'velocity_forFluorescence.mat'};
 parameters.loop_list.things_to_save.data_evaluated.variable= {'velocity_forFluorescence{', 'period_iterator', ', 1}'}; 
 parameters.loop_list.things_to_save.data_evaluated.level = 'mouse';
+
+RunAnalysis({@EvaluateOnData}, parameters);
+
+
+%% 
+% shortening instructions 
+parameters.shorten_dimensions = '41:end, :, :';
+%% Velocity for fluorescence PLSR
+% Instead of rolling velocity, reshape so each time point is its own instance
+% (Is for fluorescence PLSR)
+
+% Put into same cell array, to match other formatting
+
+% Always clear loop list first. 
+if isfield(parameters, 'loop_list')
+parameters = rmfield(parameters,'loop_list');
+end
+
+% Iterators
+parameters.loop_list.iterators = {
+               'body_part', {'loop_variables.body_parts'}, 'body_part_iterator';
+               'velocity_direction', {'loop_variables.velocity_directions'}, 'velocity_direction_iterator';
+               'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
+               'period', {'loop_variables.periods'}, 'period_iterator';
+                };
+
+
+% one column, timepoints of each instance are together 
+parameters.evaluation_instructions = {{'data_evaluated = transpose(reshape(parameters.data, [], 1));'}};
+% Input 
+parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\normalized with zscore\concatenated velocity\'], 'body_part', '\', 'velocity_direction', '\both conditions\', 'mouse', '\'};
+parameters.loop_list.things_to_load.data.filename= {'concatenated_velocity_all_periods.mat'};
+parameters.loop_list.things_to_load.data.variable= {'velocity_all{', 'period_iterator', '}'}; 
+parameters.loop_list.things_to_load.data.level = 'mouse';
+
+% Output
+parameters.loop_list.things_to_save.data_evaluated.dir = {[parameters.dir_exper 'behavior\body\normalized with zscore\velocity for fluorescence PLSR\'], 'body_part', '\', 'velocity_direction', '\',  'mouse', '\'};
+parameters.loop_list.things_to_save.data_evaluated.filename= {'velocity_forFluorescence.mat'};
+parameters.loop_list.things_to_save.data_evaluated.variable= {'velocity_forFluorescence{', 'period_iterator', ', 1}'}; 
+parameters.loop_list.things_to_save.data_evaluated.level = 'mouse';
+
+RunAnalysis({@EvaluateOnData}, parameters);
+
+%% Velocity for fluorescence PLSR WARNING PERIODS
+% Shorten certain periods first
+
+% Put into same cell array, to match other formatting
+
+% Always clear loop list first. 
+if isfield(parameters, 'loop_list')
+parameters = rmfield(parameters,'loop_list');
+end
+
+% Iterators
+parameters.loop_list.iterators = {
+               'body_part', {'loop_variables.body_parts'}, 'body_part_iterator';
+               'velocity_direction', {'loop_variables.velocity_directions'}, 'velocity_direction_iterator';
+               'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
+               'period', {'loop_variables.periods'}, 'period_iterator';
+                };
+
+parameters.shorten_dimensions = '41:end, :, :';
+
+% one column, timepoints of each instance are together 
+parameters.evaluation_instructions = {{};
+                                      {'data_evaluated = transpose(reshape(parameters.data, [], 1));'}};
+% Input 
+% indices to shorten.
+parameters.loop_list.things_to_load.indices_to_shorten.dir = {[parameters.dir_exper 'PLSR Warning Periods\']};
+parameters.loop_list.things_to_load.indices_to_shorten.filename= {'indices_to_shorten.mat'};
+parameters.loop_list.things_to_load.indices_to_shorten.variable= {'indices_to_shorten_original_index'}; 
+parameters.loop_list.things_to_load.indices_to_shorten.level = 'start';
+% data
+parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\normalized with zscore\concatenated velocity\'], 'body_part', '\', 'velocity_direction', '\both conditions\', 'mouse', '\'};
+parameters.loop_list.things_to_load.data.filename= {'concatenated_velocity_all_periods.mat'};
+parameters.loop_list.things_to_load.data.variable= {'velocity_all{', 'period_iterator', '}'}; 
+parameters.loop_list.things_to_load.data.level = 'mouse';
+
+% Output
+parameters.loop_list.things_to_save.data_evaluated.dir = {[parameters.dir_exper 'behavior\body\normalized with zscore\velocity for fluorescence PLSR Warning Periods\'], 'body_part', '\', 'velocity_direction', '\',  'mouse', '\'};
+parameters.loop_list.things_to_save.data_evaluated.filename= {'velocity_forFluorescence.mat'};
+parameters.loop_list.things_to_save.data_evaluated.variable= {'velocity_forFluorescence{', 'period_iterator', ', 1}'}; 
+parameters.loop_list.things_to_save.data_evaluated.level = 'mouse';
+
+parameters.loop_list.things_to_rename = {{'data_shortened', 'data'}};
+
+RunAnalysis({@ShortenFluorescenceWarningPeriods, @EvaluateOnData}, parameters);
+
+%% Take the normalization means, Calculate a mean for each mouse
+
+% Always clear loop list first. 
+if isfield(parameters, 'loop_list')
+parameters = rmfield(parameters,'loop_list');
+end
+
+% Iterators   
+% Both motorized & spontaneous stacks are concatenated together.
+parameters.loop_list.iterators = {
+               'data_type', {'loop_variables.data_types'}, 'data_types_iterator';
+               'body_part', {'loop_variables.body_parts'}, 'body_part_iterator';
+               'xy', {'loop_variables.xys'}, 'xy_iterator'; 
+               'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
+               'day', {'loop_variables.mice_all(', 'mouse_iterator', ').days(:).name'}, 'day_iterator'};
+
+parameters.concatDim = 1;
+parameters.concatenation_level = 'day';
+parameters.averageDim = 1;
+
+% Inputs
+% average
+parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\not normalized\paw '], 'data_type', '\', 'mouse', '\', 'day', '\averages\'};
+parameters.loop_list.things_to_load.data.filename = {'day_average_', 'body_part', '_', 'xy', '.mat'};
+parameters.loop_list.things_to_load.data.variable = {'average_', 'data_type'}; 
+parameters.loop_list.things_to_load.data.level = 'day';
+
+% Outputs
+% average of averages
+parameters.loop_list.things_to_save.average.dir = {[parameters.dir_exper 'behavior\body\not normalized\paw '], 'data_type', '\', 'mouse', '\all days\averages\'};
+parameters.loop_list.things_to_save.average.filename = {'mouse_average_', 'body_part', '_', 'xy', '.mat'};
+parameters.loop_list.things_to_save.average.variable = {'average_', 'data_type'}; 
+parameters.loop_list.things_to_save.average.level = 'mouse';
+
+parameters.loop_list.things_to_rename = {{'concatenated_data', 'data'}};
+RunAnalysis({@ConcatenateData, @AverageData}, parameters)
+
+%% repeat for std devs 
+
+% Always clear loop list first. 
+if isfield(parameters, 'loop_list')
+parameters = rmfield(parameters,'loop_list');
+end
+
+% Iterators   
+% Both motorized & spontaneous stacks are concatenated together.
+parameters.loop_list.iterators = {
+               'data_type', {'loop_variables.data_types'}, 'data_types_iterator';
+               'body_part', {'loop_variables.body_parts'}, 'body_part_iterator';
+               'xy', {'loop_variables.xys'}, 'xy_iterator'; 
+               'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
+               'day', {'loop_variables.mice_all(', 'mouse_iterator', ').days(:).name'}, 'day_iterator'};
+
+parameters.concatDim = 1;
+parameters.concatenation_level = 'day';
+parameters.averageDim = 1;
+
+% Inputs
+% std_dev
+parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\not normalized\paw '], 'data_type', '\', 'mouse', '\', 'day', '\averages\'};
+parameters.loop_list.things_to_load.data.filename = {'day_std_dev_', 'body_part', '_', 'xy', '.mat'};
+parameters.loop_list.things_to_load.data.variable = {'std_dev_', 'data_type'}; 
+parameters.loop_list.things_to_load.data.level = 'day';
+
+% Outputs
+% average of stds
+parameters.loop_list.things_to_save.average.dir = {[parameters.dir_exper 'behavior\body\not normalized\paw '], 'data_type', '\', 'mouse', '\all days\stds\'};
+parameters.loop_list.things_to_save.average.filename = {'mouse_std_dev_', 'body_part', '_', 'xy', '.mat'};
+parameters.loop_list.things_to_save.average.variable = {'std_dev_', 'data_type'}; 
+parameters.loop_list.things_to_save.average.level = 'mouse';
+
+parameters.loop_list.things_to_rename = {{'concatenated_data', 'data'}};
+RunAnalysis({@ConcatenateData, @AverageData}, parameters)
+
+%% Calculate a normalization mean across mice
+% Always clear loop list first. 
+if isfield(parameters, 'loop_list')
+parameters = rmfield(parameters,'loop_list');
+end
+
+% Iterators   
+% Both motorized & spontaneous stacks are concatenated together.
+parameters.loop_list.iterators = {
+               'data_type', {'loop_variables.data_types'}, 'data_types_iterator';
+               'body_part', {'loop_variables.body_parts'}, 'body_part_iterator';
+               'xy', {'loop_variables.xys'}, 'xy_iterator'; 
+               'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
+                };
+
+parameters.concatDim = 1;
+parameters.concatenation_level = 'mouse';
+parameters.averageDim = 1;
+
+% Inputs
+parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\not normalized\paw '], 'data_type', '\', 'mouse', '\all days\averages\'};
+parameters.loop_list.things_to_load.data.filename = {'mouse_average_', 'body_part', '_', 'xy', '.mat'};
+parameters.loop_list.things_to_load.data.variable = {'average_', 'data_type'}; 
+parameters.loop_list.things_to_load.data.level = 'mouse';
+
+% Outputs
+% average of averages
+parameters.loop_list.things_to_save.average.dir = {[parameters.dir_exper 'behavior\body\not normalized\paw '], 'data_type', '\averages across mice\'};
+parameters.loop_list.things_to_save.average.filename = {'average_', 'body_part', '_', 'xy', '.mat'};
+parameters.loop_list.things_to_save.average.variable = {'average_', 'data_type'}; 
+parameters.loop_list.things_to_save.average.level = 'xy';
+
+parameters.loop_list.things_to_rename = {{'concatenated_data', 'data'}};
+RunAnalysis({@ConcatenateData, @AverageData}, parameters)
+
+%% repeat for standard devs
+
+% Always clear loop list first. 
+if isfield(parameters, 'loop_list')
+parameters = rmfield(parameters,'loop_list');
+end
+
+% Iterators   
+% Both motorized & spontaneous stacks are concatenated together.
+parameters.loop_list.iterators = {
+               'data_type', {'loop_variables.data_types'}, 'data_types_iterator';
+               'body_part', {'loop_variables.body_parts'}, 'body_part_iterator';
+               'xy', {'loop_variables.xys'}, 'xy_iterator'; 
+               'mouse', {'loop_variables.mice_all(:).name'}, 'mouse_iterator'; 
+                };
+
+parameters.concatDim = 1;
+parameters.concatenation_level = 'mouse';
+parameters.averageDim = 1;
+
+% Inputs
+parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\not normalized\paw '], 'data_type', '\', 'mouse', '\all days\stds\'};
+parameters.loop_list.things_to_load.data.filename = {'mouse_std_dev_', 'body_part', '_', 'xy', '.mat'};
+parameters.loop_list.things_to_load.data.variable = {'std_dev_', 'data_type'}; 
+parameters.loop_list.things_to_load.data.level = 'mouse';
+
+% Outputs
+% average of stds
+parameters.loop_list.things_to_save.average.dir = {[parameters.dir_exper 'behavior\body\not normalized\paw '], 'data_type', '\std_devs across mice\'};
+parameters.loop_list.things_to_save.average.filename = {'std_dev_', 'body_part', '_', 'xy', '.mat'};
+parameters.loop_list.things_to_save.average.variable = {'std_dev_', 'data_type'}; 
+parameters.loop_list.things_to_save.average.level = 'xy';
+
+parameters.loop_list.things_to_rename = {{'concatenated_data', 'data'}};
+RunAnalysis({@ConcatenateData, @AverageData}, parameters)
+
+%% Calculate averages & stds for total magnitudes
+% use the already-found values from above
+
+% Always clear loop list first. 
+if isfield(parameters, 'loop_list')
+parameters = rmfield(parameters,'loop_list');
+end
+
+% Iterators   
+% Both motorized & spontaneous stacks are concatenated together.
+parameters.loop_list.iterators = {
+               'data_type', {'loop_variables.data_types'}, 'data_types_iterator';
+               'body_part', {'loop_variables.body_parts'}, 'body_part_iterator';
+               'mean_std', {'loop_variables.mean_stds'}, 'body_part_iterator';
+                };
+
+parameters.evaluation_instructions = {{'x = parameters.x;'...
+                                       'y = parameters.y;'... 
+                                       'data_evaluated = sqrt(x^2 + y ^2);'}};
+
+% Inputs
+% x 
+parameters.loop_list.things_to_load.x.dir = {[parameters.dir_exper 'behavior\body\not normalized\paw '], 'data_type', '\', 'mean_std', 's across mice\'};
+parameters.loop_list.things_to_load.x.filename = {'mean_std', '_', 'body_part', '_x.mat'};
+parameters.loop_list.things_to_load.x.variable = {'mean_std', '_', 'data_type'}; 
+parameters.loop_list.things_to_load.x.level = 'mean_std';
+% y 
+parameters.loop_list.things_to_load.y.dir = {[parameters.dir_exper 'behavior\body\not normalized\paw '], 'data_type', '\', 'mean_std', 's across mice\'};
+parameters.loop_list.things_to_load.y.filename = {'mean_std', '_', 'body_part', '_y.mat'};
+parameters.loop_list.things_to_load.y.variable = {'mean_std', '_', 'data_type'}; 
+parameters.loop_list.things_to_load.y.level = 'mean_std';
+
+% Outputs
+parameters.loop_list.things_to_save.data_evaluated.dir = {[parameters.dir_exper 'behavior\body\not normalized\paw '], 'data_type', '\', 'mean_std', 's across mice\'};
+parameters.loop_list.things_to_save.data_evaluated.filename = {'mean_std', '_', 'body_part', '_total_magnitude.mat'};
+parameters.loop_list.things_to_save.data_evaluated.variable = {'mean_std', '_', 'data_type'}; 
+parameters.loop_list.things_to_save.data_evaluated.level = 'mean_std';
 
 RunAnalysis({@EvaluateOnData}, parameters);
