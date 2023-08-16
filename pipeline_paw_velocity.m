@@ -1159,3 +1159,48 @@ parameters.loop_list.things_to_save.data_evaluated.variable = {'mean_std', '_', 
 parameters.loop_list.things_to_save.data_evaluated.level = 'mean_std';
 
 RunAnalysis({@EvaluateOnData}, parameters);
+
+%% put them all together for easier loading 
+% stds you'll need later:
+parameters.loop_variables.later_stds = {'tail_total_magnitude'
+ 'nose_total_magnitude'
+ 'FL_total_magnitude'
+ 'HL_total_magnitude'
+ 'FL_x'};
+
+% Always clear loop list first. 
+if isfield(parameters, 'loop_list')
+parameters = rmfield(parameters,'loop_list');
+end
+
+% Iterators   
+parameters.loop_list.iterators = {
+               'later_std', {'loop_variables.later_stds'}, 'later_std_iterator';
+                };
+parameters.evaluation_instructions = {{'data_evaluated = parameters.data;'}};
+
+% Inputs 
+parameters.loop_list.things_to_load.data.dir = {[parameters.dir_exper 'behavior\body\not normalized\paw velocity\std_devs across mice\']};
+parameters.loop_list.things_to_load.data.filename = {'std_dev_', 'later_std', '.mat'};
+parameters.loop_list.things_to_load.data.variable = {'std_dev_velocity'}; 
+parameters.loop_list.things_to_load.data.level = 'later_std';
+
+% Outputs 
+parameters.loop_list.things_to_save.data_evaluated.dir = {[parameters.dir_exper 'behavior\body\not normalized\paw velocity\std_devs across mice\']};
+parameters.loop_list.things_to_save.data_evaluated.filename = {'stds_together.mat'};
+parameters.loop_list.things_to_save.data_evaluated.variable = {'stds_together.', 'later_std'}; 
+parameters.loop_list.things_to_save.data_evaluated.level = 'end';
+
+RunAnalysis({@EvaluateOnData}, parameters);
+
+%% rename the fields
+
+load('Y:\Sarah\Analysis\Experiments\Random Motorized Treadmill\behavior\body\not normalized\paw velocity\std_devs across mice\stds_together.mat')
+old = stds_together;
+clear stds_together;
+stds_together.tail = old.tail_total_magnitude;
+stds_together.nose = old.nose_total_magnitude;
+stds_together.FL = old.FL_total_magnitude;
+stds_together.HL = old.HL_total_magnitude;
+stds_together.x = old.FL_x;
+save('Y:\Sarah\Analysis\Experiments\Random Motorized Treadmill\behavior\body\not normalized\paw velocity\std_devs across mice\stds_together.mat', 'stds_together')
